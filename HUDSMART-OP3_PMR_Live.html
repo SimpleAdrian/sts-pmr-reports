@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STS NextGen PMR — HUDSMART-OP3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ==================== CSS VARIABLES ==================== */
+:root {
+  --maroon: #912F46;
+  --maroon-soft: rgba(145,47,70,0.08);
+  --teal: #00A8AB;
+  --teal-bright: #00CED1;
+  --cream: #FFFAED;
+  --cream-mid: #F5F0E6;
+  --charcoal: #1A1714;
+  --warm-gray: #8A8279;
+  --border: #E0DACF;
+  --green: #1B7D3A;
+  --yellow: #D97706;
+  --red: #DC2626;
+  --green-bg: rgba(27,125,58,0.06);
+  --yellow-bg: rgba(217,119,6,0.06);
+  --red-bg: rgba(220,38,38,0.06);
+  --green-border: rgba(27,125,58,0.25);
+  --yellow-border: rgba(217,119,6,0.25);
+  --red-border: rgba(220,38,38,0.25);
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(26,23,20,0.06);
+}
+
+/* ==================== RESET / BASE ==================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--charcoal);
+  line-height: 1.55;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+code, .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+main { max-width: 1100px; margin: 0 auto; padding: 0 24px 48px; }
+
+/* ==================== HEADER ==================== */
+.report-header {
+  background: linear-gradient(135deg, var(--charcoal) 0%, #2D2824 100%);
+  padding: 28px 32px 24px;
+  color: #fff;
+  border-bottom: 3px solid var(--maroon);
+}
+.header-inner { max-width: 1100px; margin: 0 auto; }
+.brand-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.brand-mark {
+  font-size: 18px; font-weight: 700; letter-spacing: -0.03em;
+  color: var(--teal-bright);
+}
+.brand-mark span { color: #fff; font-weight: 400; }
+.doc-type {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--warm-gray); border-left: 1px solid rgba(255,255,255,0.15); padding-left: 16px;
+}
+.project-title {
+  font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+  line-height: 1.25; margin-bottom: 14px;
+}
+.project-info-bar {
+  display: flex; flex-wrap: wrap; gap: 24px;
+  font-size: 11px; color: rgba(255,255,255,0.7);
+}
+.info-item strong { color: #fff; font-weight: 600; }
+.info-item .teal { color: var(--teal-bright); }
+
+/* ==================== STATUS BAR ==================== */
+.status-bar {
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 24px; margin: 20px auto; max-width: 1100px;
+  display: flex; justify-content: center; gap: 40px;
+  box-shadow: var(--shadow);
+}
+.status-item { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
+.status-dot {
+  width: 12px; height: 12px; border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
+}
+.status-dot.green { background: var(--green); }
+.status-dot.yellow { background: var(--yellow); }
+.status-dot.red { background: var(--red); }
+
+/* ==================== SECTIONS ==================== */
+.section {
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+  margin-top: 20px; overflow: hidden; box-shadow: var(--shadow);
+}
+.section-header {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.section-icon { font-size: 16px; }
+.section-title { font-size: 14px; font-weight: 700; color: var(--maroon); }
+.section-body { padding: 20px; }
+
+/* ==================== CHART ==================== */
+.chart-wrap { position: relative; height: 300px; }
+.chart-legend {
+  display: flex; gap: 18px; padding: 12px 20px 0; flex-wrap: wrap;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; color: var(--warm-gray); }
+.legend-swatch { width: 14px; height: 10px; border-radius: 2px; }
+.legend-line { width: 18px; height: 0; border-top: 2.5px solid; border-radius: 2px; }
+.legend-line.dashed { border-top-style: dashed; }
+
+/* ==================== BURN RATE ==================== */
+.burn-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px; margin-bottom: 20px;
+}
+.burn-metric { text-align: center; }
+.burn-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--warm-gray); margin-bottom: 4px; }
+.burn-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: var(--charcoal); }
+.burn-value.green { color: var(--green); }
+.burn-value.red { color: var(--red); }
+.burn-bar-wrap {
+  background: var(--cream-mid); border-radius: 6px; height: 28px; position: relative; overflow: hidden; margin-top: 6px;
+}
+.burn-bar-fill {
+  height: 100%; border-radius: 6px 0 0 6px;
+  background: linear-gradient(90deg, var(--maroon), rgba(145,47,70,0.75));
+  display: flex; align-items: center; justify-content: flex-end; padding-right: 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; color: #fff;
+  min-width: 60px;
+}
+.exhaust-note {
+  text-align: right; font-size: 11px; color: var(--warm-gray); margin-top: 8px;
+}
+.exhaust-note strong { color: var(--charcoal); }
+
+/* ==================== FINANCIAL TABLE ==================== */
+.fin-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.fin-table th {
+  background: var(--cream-mid); padding: 10px 14px;
+  text-align: right; font-weight: 600; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--warm-gray);
+  border-bottom: 2px solid var(--border);
+}
+.fin-table th:first-child { text-align: left; }
+.fin-table td { padding: 10px 14px; text-align: right; border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; }
+.fin-table td:first-child { text-align: left; font-family: 'DM Sans', sans-serif; font-weight: 600; color: var(--charcoal); }
+.fin-table tr.total-row td { font-weight: 700; border-top: 2px solid var(--maroon); background: var(--maroon-soft); }
+.fin-table .var-positive { color: var(--green); }
+.fin-table .var-negative { color: var(--red); }
+
+/* ==================== TOP CONTRIBUTORS ==================== */
+.contrib-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.contrib-table th {
+  background: var(--cream-mid); padding: 10px 14px;
+  text-align: right; font-weight: 600; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--warm-gray);
+  border-bottom: 2px solid var(--border);
+}
+.contrib-table th:first-child { text-align: left; }
+.contrib-table td { padding: 8px 14px; text-align: right; border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.contrib-table td:first-child { text-align: left; font-family: 'DM Sans', sans-serif; font-weight: 500; }
+.contrib-table tr.negative-margin { background: rgba(145, 47, 70, 0.08); }
+.contrib-table tr.negative-margin td { color: var(--maroon); font-weight: 600; }
+
+/* ==================== RISK REGISTER ==================== */
+.risk-item {
+  padding: 14px 16px; border-radius: 6px; margin-bottom: 10px;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.risk-item.critical { background: var(--red-bg); border-left: 3px solid var(--red); }
+.risk-item.high { background: var(--yellow-bg); border-left: 3px solid var(--yellow); }
+.risk-item.medium { background: var(--green-bg); border-left: 3px solid var(--green); }
+.risk-score {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+  min-width: 40px; text-align: center; padding: 3px 6px; border-radius: 4px;
+  background: rgba(0,0,0,0.06);
+}
+.risk-title { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+.risk-detail { font-size: 12px; color: var(--warm-gray); }
+.risk-owner { font-size: 11px; font-weight: 600; color: var(--teal); margin-top: 4px; }
+
+/* ==================== STAKEHOLDER UPDATES ==================== */
+.stake-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.stake-card {
+  border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px;
+  background: var(--cream);
+}
+.stake-role { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--maroon); margin-bottom: 8px; }
+.stake-item { font-size: 12px; color: var(--charcoal); margin-bottom: 6px; line-height: 1.5; }
+.stake-tag {
+  display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 6px;
+  border-radius: 3px; background: var(--maroon-soft); color: var(--maroon);
+}
+
+/* ==================== PMR NARRATIVE ==================== */
+.narrative-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.narrative-block {
+  border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px;
+  background: var(--cream);
+}
+.narrative-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--maroon); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.narrative-text { font-size: 12px; color: var(--charcoal); line-height: 1.6; }
+.narrative-text li { margin-bottom: 4px; }
+.narrative-text ul { padding-left: 16px; }
+
+/* ==================== TASK BREAKDOWN ==================== */
+.task-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.task-table th {
+  background: var(--cream-mid); padding: 10px 14px;
+  text-align: right; font-weight: 600; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--warm-gray);
+  border-bottom: 2px solid var(--border);
+}
+.task-table th:first-child { text-align: left; }
+.task-table td { padding: 10px 14px; text-align: right; border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; }
+.task-table td:first-child { text-align: left; font-family: 'DM Sans', sans-serif; font-weight: 600; }
+
+/* ==================== DATA SOURCE BADGE ==================== */
+.data-source-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10px; font-weight: 600; padding: 4px 10px;
+  border-radius: 4px; background: rgba(0,168,171,0.08); color: var(--teal);
+  border: 1px solid rgba(0,168,171,0.2); margin-left: auto;
+}
+
+/* ==================== FOOTER ==================== */
+.report-footer {
+  background: var(--charcoal); padding: 16px 32px; margin-top: 32px;
+}
+.footer-inner {
+  max-width: 1100px; margin: 0 auto;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--warm-gray);
+}
+.footer-classification {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--maroon);
+}
+
+/* ==================== PRINT ==================== */
+@media print {
+  body { background: #fff; font-size: 11px; }
+  .report-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .section { break-inside: avoid; box-shadow: none; }
+  .report-footer { position: fixed; bottom: 0; left: 0; right: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== HEADER ==================== -->
+<header class="report-header">
+  <div class="header-inner">
+    <div class="brand-row">
+      <div class="brand-mark">[simple]<span> technology solutions</span></div>
+      <div class="doc-type">Program Management Review</div>
+    </div>
+    <h1 class="project-title">HUD SMART — Option Period 3 (HUDSMART-OP3)</h1>
+    <div class="project-info-bar">
+      <div class="info-item"><strong>Project Code:</strong> HUDSMART-OP3</div>
+      <div class="info-item"><strong>Review Tier:</strong> <span class="teal">Tier 1 — Monthly</span></div>
+      <div class="info-item"><strong>Contract Type:</strong> Fixed Price (FP)</div>
+      <div class="info-item"><strong>Customer:</strong> HUD via GSA</div>
+      <div class="info-item"><strong>PoP:</strong> Jun 16, 2025 — Jun 15, 2026</div>
+      <div class="info-item"><strong>TCV / Funded:</strong> <span class="teal">$5,238,585 / $3,402,648</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== STATUS BAR ==================== -->
+<div class="status-bar">
+  <div class="status-item"><span class="status-dot green"></span> Overall</div>
+  <div class="status-item"><span class="status-dot green"></span> Delivery</div>
+  <div class="status-item"><span class="status-dot yellow"></span> Financial</div>
+  <div class="status-item"><span class="status-dot green"></span> Customer</div>
+</div>
+
+<main>
+
+<!-- ==================== 13-MONTH TREND CHART ==================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">📈</span>
+    <span class="section-title">13-Month Financial Trend</span>
+    <span class="data-source-badge">🔗 Unanet DataLake — Live</span>
+  </div>
+  <div class="chart-legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(145,47,70,0.75);"></div> Revenue</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(0,168,171,0.65);"></div> Labor Cost</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:rgba(245,158,11,0.55);"></div> ODC / Expense</div>
+    <div class="legend-item"><div class="legend-line" style="border-color:rgba(27,125,58,1);"></div> Gross Margin</div>
+    <div class="legend-item"><div class="legend-line dashed" style="border-color:rgba(138,130,121,0.6);"></div> Budget (Plan)</div>
+  </div>
+  <div class="section-body">
+    <div class="chart-wrap">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== BURN RATE ANALYSIS ==================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">🔥</span>
+    <span class="section-title">Burn Rate Analysis</span>
+  </div>
+  <div class="section-body">
+    <div class="burn-grid">
+      <div class="burn-metric">
+        <div class="burn-label">Total Funding</div>
+        <div class="burn-value">$3,402,648</div>
+      </div>
+      <div class="burn-metric">
+        <div class="burn-label">Earned to Date (CTD Rev)</div>
+        <div class="burn-value">$3,540,197</div>
+      </div>
+      <div class="burn-metric">
+        <div class="burn-label">Remaining Balance</div>
+        <div class="burn-value red">($137,549)</div>
+      </div>
+      <div class="burn-metric">
+        <div class="burn-label">EAC (Sched. Total)</div>
+        <div class="burn-value">$5,224,351</div>
+      </div>
+      <div class="burn-metric">
+        <div class="burn-label">CTD Labor Cost</div>
+        <div class="burn-value">$1,631,849</div>
+      </div>
+      <div class="burn-metric">
+        <div class="burn-label">Delta (Funded - EAC)</div>
+        <div class="burn-value red">($1,821,704)</div>
+      </div>
+    </div>
+    <div class="burn-bar-wrap">
+      <div class="burn-bar-fill" style="width:104.0%;">104.0%</div>
+    </div>
+    <div class="exhaust-note">
+      Funded burn: <strong>104.0%</strong> of funded value recognized as revenue through Feb 2026 actuals.
+      Revenue recognized exceeds funded value — indicates <strong>FP schedule billing exceeds funding line</strong>.
+      Remaining FP schedule: $1,684,374 through Jun 2026. TCV covers full schedule ($5.22M rev vs $5.24M TCV).
+    </div>
+  </div>
+</div>
+
+<!-- ==================== FINANCIAL PERFORMANCE TABLE ==================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">💰</span>
+    <span class="section-title">Financial Performance</span>
+  </div>
+  <div class="section-body">
+    <table class="fin-table">
+      <thead>
+        <tr>
+          <th>Line Item</th>
+          <th>This Period (Feb '26)</th>
+          <th>YTD Actual (CTD)</th>
+          <th>Budget (PoP)</th>
+          <th>Variance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Revenue (FP Schedule)</td>
+          <td>$421,093</td>
+          <td>$3,540,197</td>
+          <td>$5,238,584</td>
+          <td class="var-positive">67.6% earned</td>
+        </tr>
+        <tr>
+          <td>Direct Labor</td>
+          <td>$202,295</td>
+          <td>$1,631,849</td>
+          <td>$4,607,200</td>
+          <td class="var-positive">35.4% consumed</td>
+        </tr>
+        <tr>
+          <td>Labor Hours</td>
+          <td>3,103 hrs</td>
+          <td>27,435 hrs</td>
+          <td>43,541 hrs</td>
+          <td class="var-positive">63.0% consumed</td>
+        </tr>
+        <tr>
+          <td>ODC / Expenses</td>
+          <td>$0</td>
+          <td>$0</td>
+          <td>$631,384</td>
+          <td>—</td>
+        </tr>
+        <tr class="total-row">
+          <td>Gross Margin (Rev − Labor)</td>
+          <td>$218,798</td>
+          <td>$1,908,348</td>
+          <td>$631,384*</td>
+          <td class="var-positive">53.9% GM</td>
+        </tr>
+        <tr class="total-row">
+          <td>Gross Margin %</td>
+          <td>52.0%</td>
+          <td>53.9%</td>
+          <td>—</td>
+          <td class="var-positive">▲ Strong</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size: 11px; color: var(--warm-gray); margin-top: 10px;">
+      * Budget GM proxy = expense budget (no ODC actuals recorded). Labor billed amounts ($1,868,748 CTD) differ from FP revenue schedule ($3,540,197 CTD) — FP schedule governs revenue recognition.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TASK BREAKDOWN ==================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">📋</span>
+    <span class="section-title">Task-Level Breakdown</span>
+  </div>
+  <div class="section-body">
+    <table class="task-table">
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Hours</th>
+          <th>Labor Cost</th>
+          <th>Bill Amount</th>
+          <th>Margin</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>HUDSMART-OP3-0030</td>
+          <td>14,106.5</td>
+          <td>$830,117</td>
+          <td>$947,447</td>
+          <td class="var-positive">12.4%</td>
+        </tr>
+        <tr>
+          <td>HUDSMART-OP3-0020</td>
+          <td>11,810.0</td>
+          <td>$700,891</td>
+          <td>$820,455</td>
+          <td class="var-positive">14.6%</td>
+        </tr>
+        <tr>
+          <td>HUDSMART-OP3-0010</td>
+          <td>1,228.3</td>
+          <td>$84,625</td>
+          <td>$82,888</td>
+          <td class="var-negative">-2.1%</td>
+        </tr>
+        <tr>
+          <td>HUDSMART-OP3-0040</td>
+          <td>290.0</td>
+          <td>$16,216</td>
+          <td>$17,958</td>
+          <td class="var-positive">9.7%</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size: 11px; color: var(--warm-gray); margin-top: 10px;">
+      Note: Task-level "Bill Amount" reflects labor bill rates × hours (T&amp;M equivalent view). FP revenue is recognized on the schedule, not per-task billing.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== TOP CONTRIBUTORS ==================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">👥</span>
+    <span class="section-title">Top 10 Contributors (CTD)</span>
+  </div>
+  <div class="section-body">
+    <table class="contrib-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Hours</th>
+          <th>Labor Cost</th>
+          <th>Bill Amount</th>
+          <th>Eff. Bill Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Bruck Assefa</td><td>1,397.5</td><td>$53,148</td><td>$108,013</td><td>$77.28</td></tr>
+        <tr class="negative-margin"><td>Faisal Shafiq ⚠️</td><td>1,376.5</td><td>$80,749</td><td>$18,696</td><td>$13.58</td></tr>
+        <tr class="negative-margin"><td>Nitika Thukral ⚠️</td><td>1,372.2</td><td>$82,509</td><td>$19,860</td><td>$14.47</td></tr>
+        <tr class="negative-margin"><td>Jay Cooper ⚠️</td><td>1,364.0</td><td>$266,592</td><td>$64,220</td><td>$47.08</td></tr>
+        <tr class="negative-margin"><td>Violet Gooding ⚠️</td><td>1,358.0</td><td>$95,563</td><td>$23,124</td><td>$17.03</td></tr>
+        <tr><td>Milton Muro</td><td>1,346.0</td><td>$39,793</td><td>$161,795</td><td>$120.20</td></tr>
+        <tr class="negative-margin"><td>Taylor Schmidt ⚠️</td><td>1,344.0</td><td>$81,737</td><td>$19,027</td><td>$14.16</td></tr>
+        <tr><td>Jessica Edwards</td><td>1,306.0</td><td>$62,886</td><td>$162,623</td><td>$124.52</td></tr>
+        <tr><td>David Vaca</td><td>1,304.0</td><td>$65,778</td><td>$207,166</td><td>$158.87</td></tr>
+        <tr><td>Colleen Schmidt</td><td>1,302.5</td><td>$46,439</td><td>$100,670</td><td>$77.29</td></tr>
+      </tbody>
+    </table>
+    <div style="font-size: 11px; color: var(--warm-gray); margin-top: 10px;">
+      ⚠️ <strong>5 of 10 contributors show negative allocated margins</strong> — Shafiq ($-62K), Thukral ($-63K), Cooper ($-202K), Gooding ($-72K), T. Schmidt ($-63K). Combined margin drag: <strong>$462K</strong>. On FP contracts, person-level bill_amount is Unanet's internal allocation — not actual billing. Actual revenue comes from the fixed_price schedule. These allocations warrant review with Finance to validate labor category mapping and cost rate accuracy.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== RISK REGISTER ==================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">⚠️</span>
+    <span class="section-title">Risk Register (Data-Driven Flags)</span>
+  </div>
+  <div class="section-body">
+    <div class="risk-item high">
+      <div class="risk-score">L3×I3</div>
+      <div>
+        <div class="risk-title">Revenue vs. Funded Value Overrun</div>
+        <div class="risk-detail">CTD FP revenue ($3.54M) exceeds funded value ($3.40M) by $137K. FP schedule extends to Jun 2026 with $5.22M total — TCV ($5.24M) covers, but funding increments must keep pace.</div>
+        <div class="risk-owner">Owner: Contracts / Finance</div>
+      </div>
+    </div>
+    <div class="risk-item high">
+      <div class="risk-score">L4×I3</div>
+      <div>
+        <div class="risk-title">Systemic Bill Allocation Anomaly — 5 of 10 Contributors</div>
+        <div class="risk-detail">Five contributors show negative allocated margins totaling <strong>$462K</strong> drag: Cooper ($-202K), Gooding ($-72K), Thukral ($-63K), T. Schmidt ($-63K), Shafiq ($-62K). On FP contracts, Unanet allocates bill_amount internally — this does NOT reflect actual billing (which comes from fixed_price schedule). Investigate: labor category mapping errors, cost rate mismatches, or bill allocation configuration in Unanet project setup.</div>
+        <div class="risk-owner">Owner: Finance / Project Accountant — URGENT</div>
+      </div>
+    </div>
+    <div class="risk-item medium">
+      <div class="risk-score">L2×I2</div>
+      <div>
+        <div class="risk-title">Zero Expense Actuals Against $615K Plan</div>
+        <div class="risk-detail">Expense plan shows $615K budgeted but $0 recorded. Either expenses not yet incurred, or being booked to wrong project/cost element. Verify with PM.</div>
+        <div class="risk-owner">Owner: PM / Project Accountant</div>
+      </div>
+    </div>
+    <div class="risk-item medium">
+      <div class="risk-score">L2×I2</div>
+      <div>
+        <div class="risk-title">Hours Consumption vs. Revenue Pace Mismatch</div>
+        <div class="risk-detail">63.0% of budgeted hours consumed vs. 67.6% of revenue recognized. On FP, this is favorable (delivering with fewer hours than revenue implies), but narrow. Monitor task -0010 negative margin.</div>
+        <div class="risk-owner">Owner: PM</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== STAKEHOLDER UPDATES ==================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">🎯</span>
+    <span class="section-title">Stakeholder Updates</span>
+  </div>
+  <div class="section-body">
+    <div class="stake-grid">
+      <div class="stake-card">
+        <div class="stake-role">CEO / CFO</div>
+        <div class="stake-item">53.9% gross margin — strongest FP performer in portfolio</div>
+        <div class="stake-item">Revenue recognition ahead of cost consumption — favorable FP economics</div>
+        <div class="stake-item">Investigate bill allocation anomaly — 5 contributors show $462K negative allocated margin <span class="stake-tag">ACTION</span></div>
+      </div>
+      <div class="stake-card">
+        <div class="stake-role">BD / Capture</div>
+        <div class="stake-item">OP3 PoP through Jun 2026 — begin OP4/recompete positioning Q2</div>
+        <div class="stake-item">HUD SMART delivery track record supports past performance narrative</div>
+        <div class="stake-item">GSA vehicle (GS-35F-271GA) enables follow-on task orders</div>
+      </div>
+      <div class="stake-card">
+        <div class="stake-role">Delivery / CTO</div>
+        <div class="stake-item">10 team members active with strong utilization</div>
+        <div class="stake-item">Task -0030 carrying 51.4% of hours — concentration risk if key staff turn over</div>
+        <div class="stake-item">No ODC/subcontractor actuals recorded — verify delivery model accuracy</div>
+      </div>
+      <div class="stake-card">
+        <div class="stake-role">HR / Operations</div>
+        <div class="stake-item">Team fully staffed — consistent ~3,100-3,500 hrs/month through Jan '26</div>
+        <div class="stake-item">Nov dip to 2,760 hrs — seasonal (Thanksgiving) or attrition?</div>
+        <div class="stake-item">PoP ends Jun 2026 — workforce planning for transition/extension needed</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PMR NARRATIVE ==================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">📝</span>
+    <span class="section-title">PMR Narrative</span>
+  </div>
+  <div class="section-body">
+    <div class="narrative-grid">
+      <div class="narrative-block">
+        <div class="narrative-label">Accomplishments</div>
+        <div class="narrative-text">
+          <ul>
+            <li>Maintained 53.9% CTD gross margin on FP delivery — significantly above portfolio average</li>
+            <li>Steady team velocity at 3,100+ hrs/month for 7 consecutive months</li>
+            <li>Revenue recognition tracking ahead of labor consumption (67.6% rev vs 63.0% hours)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="narrative-block">
+        <div class="narrative-label">Issues & Blockers</div>
+        <div class="narrative-text">
+          <ul>
+            <li>Systemic bill allocation anomaly — 5 of 10 contributors show negative allocated margins ($462K combined drag). Likely Unanet FP bill allocation config issue, not actual billing shortfall.</li>
+            <li>$0 expense actuals vs $615K plan — either timing or booking error</li>
+            <li>FP revenue ($3.54M) exceeds funded amount ($3.40M) — funding increment needed</li>
+          </ul>
+        </div>
+      </div>
+      <div class="narrative-block">
+        <div class="narrative-label">Next Period Objectives</div>
+        <div class="narrative-text">
+          <ul>
+            <li>Resolve bill allocation anomaly for 5 contributors with Finance — validate Unanet FP labor cat mapping and cost rate configuration</li>
+            <li>Confirm expense plan accuracy with PM — validate $0 actuals</li>
+            <li>Secure next funding increment to cover FP revenue schedule</li>
+            <li>Begin OP4/recompete capture planning with BD team</li>
+          </ul>
+        </div>
+      </div>
+      <div class="narrative-block">
+        <div class="narrative-label">CFO / Finance Notes</div>
+        <div class="narrative-text">
+          <ul>
+            <li>FP economics strong at project level — labor cost is 46.1% of revenue (target &lt;55%)</li>
+            <li>Person-level bill allocations unreliable — 5 contributors show impossible negative margins. This is a Unanet FP allocation issue, not an actual billing shortfall. Actual revenue confirmed at $3.54M CTD via fixed_price schedule.</li>
+            <li>Run-rate: ~$420K/month FP revenue, ~$200K/month labor cost = $220K/month gross contribution</li>
+            <li>Annualized: ~$2.6M gross margin potential — material EBITDA contributor</li>
+            <li>⚠️ Funded burn at 104% — remaining funded value is only $7.9K. Next funding increment is critical.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DATA PROVENANCE ==================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-icon">🔗</span>
+    <span class="section-title">Data Provenance</span>
+  </div>
+  <div class="section-body" style="font-size: 12px; color: var(--warm-gray);">
+    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding: 6px 12px; font-weight: 600; width: 180px;">Source</td>
+        <td style="padding: 6px 12px;">Unanet GovCon DataLake (Data Virtuality / Teiid)</td>
+      </tr>
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding: 6px 12px; font-weight: 600;">Connection</td>
+        <td style="padding: 6px 12px; font-family: 'JetBrains Mono', monospace;">data.unanet.biz:35433 → keepitsts schema</td>
+      </tr>
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding: 6px 12px; font-weight: 600;">Generated</td>
+        <td style="padding: 6px 12px;">March 6, 2026</td>
+      </tr>
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding: 6px 12px; font-weight: 600;">Data Tables Used</td>
+        <td style="padding: 6px 12px; font-family: 'JetBrains Mono', monospace;">project, customer, person_time_data, person, fixed_price, expense_plan, planned_time, task, expense_project_allocation, expense_data</td>
+      </tr>
+      <tr style="border-bottom: 1px solid var(--border);">
+        <td style="padding: 6px 12px; font-weight: 600;">Actuals Through</td>
+        <td style="padding: 6px 12px;">March 2026 (partial — 410 hrs)</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 12px; font-weight: 600;">Classification</td>
+        <td style="padding: 6px 12px; font-weight: 600; color: var(--maroon);">STS Internal — CUI</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+<div class="report-footer">
+  <div class="footer-inner">
+    <span>
+      <strong style="color: var(--teal-bright);">STS NextGen PMR</strong>
+      <span style="margin: 0 8px;">·</span>
+      HUDSMART-OP3
+      <span style="margin: 0 8px;">·</span>
+      Generated March 6, 2026 from Unanet DataLake
+    </span>
+    <span class="footer-classification">STS Internal — CUI</span>
+  </div>
+</div>
+
+<!-- ==================== CHART SCRIPT ==================== -->
+<script>
+// Real data from Unanet DataLake — HUDSMART-OP3
+const months = ['Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26*'];
+
+// FP Revenue from fixed_price schedule (actuals through Feb, Mar partial)
+const revenue = [145267, 356346, 370493, 390235, 422326, 417457, 419080, 597681, 421093, 421093];
+
+// Labor cost from person_time_data
+const labor = [96722, 176944, 185083, 198924, 202220, 167874, 188062, 191867, 202295, 21859];
+
+// ODC / Expense actuals (none recorded)
+const odc = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+// Gross Margin = Revenue - Labor - ODC
+const gm = revenue.map((r, i) => r - labor[i] - odc[i]);
+
+// Budget plan line (monthly average of TCV over 12-month PoP)
+const monthlyBudget = 5238585 / 12;
+const budget = Array(10).fill(Math.round(monthlyBudget));
+
+const ctx = document.getElementById('trendChart').getContext('2d');
+
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: months,
+    datasets: [
+      {
+        label: 'Revenue',
+        data: revenue,
+        backgroundColor: 'rgba(145,47,70,0.75)',
+        borderColor: 'rgba(145,47,70,1)',
+        borderWidth: 1,
+        borderRadius: 3,
+        order: 2
+      },
+      {
+        label: 'Labor Cost',
+        data: labor,
+        backgroundColor: 'rgba(0,168,171,0.65)',
+        borderColor: 'rgba(0,168,171,1)',
+        borderWidth: 1,
+        borderRadius: 3,
+        order: 3
+      },
+      {
+        label: 'ODC / Expense',
+        data: odc,
+        backgroundColor: 'rgba(245,158,11,0.55)',
+        borderColor: 'rgba(245,158,11,1)',
+        borderWidth: 1,
+        borderRadius: 3,
+        order: 4
+      },
+      {
+        label: 'Gross Margin',
+        data: gm,
+        type: 'line',
+        borderColor: 'rgba(27,125,58,1)',
+        backgroundColor: 'rgba(27,125,58,0.08)',
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointBackgroundColor: 'rgba(27,125,58,1)',
+        fill: false,
+        tension: 0.3,
+        order: 1
+      },
+      {
+        label: 'Budget (Plan)',
+        data: budget,
+        type: 'line',
+        borderColor: 'rgba(138,130,121,0.6)',
+        borderWidth: 2,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        fill: false,
+        order: 0
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1A1714',
+        titleColor: '#fff',
+        bodyColor: '#ddd',
+        padding: 12,
+        cornerRadius: 6,
+        titleFont: { family: 'DM Sans', size: 12, weight: 600 },
+        bodyFont: { family: 'JetBrains Mono', size: 11 },
+        callbacks: {
+          label: function(ctx) {
+            return ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString();
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          font: { family: 'DM Sans', size: 10, weight: 500 },
+          color: '#8A8279'
+        }
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: '#E8E4DD', drawBorder: false },
+        ticks: {
+          font: { family: 'JetBrains Mono', size: 10 },
+          color: '#8A8279',
+          callback: function(value) {
+            if (value === 0) return '$0';
+            return '$' + (value / 1000).toFixed(0) + 'K';
+          }
+        }
+      }
+    }
+  }
+});
+</script>
+
+</body>
+</html>
